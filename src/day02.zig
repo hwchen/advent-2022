@@ -21,7 +21,6 @@ fn run(input: []const u8) struct { part01: u64, part02: u64 } {
     var part01: u64 = 0;
     var part02: u64 = 0;
 
-    // Use split, not tokenize, to get the empty line.
     var lines = std.mem.tokenize(u8, input, "\n");
 
     while (lines.next()) |line| {
