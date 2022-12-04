@@ -1,3 +1,9 @@
+//! See https://github.com/SpexGuy/Advent2022/blob/main/src/day03.zig for example of using bitsets.
+//! In the same implementation, see an interesting way to turn
+//! ```
+//! []const T, 3 -> []const [3] T
+//! ```
+
 const std = @import("std");
 const data = @embedFile("input/day03.txt");
 const expectEqual = std.testing.expectEqual;
