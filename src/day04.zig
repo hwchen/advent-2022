@@ -1,3 +1,7 @@
+//! Even simpler is
+//! - use tokenize on "-," instead of split pair and then range
+//! - just compare endpoints w/ boolean instead of using bitset
+
 const std = @import("std");
 const data = @embedFile("input/day04.txt");
 const expectEqual = std.testing.expectEqual;
