@@ -18,9 +18,13 @@ fn run(input: []const u8) struct { part01: u64, part02: u64 } {
     var lines = std.mem.tokenize(u8, input, "\n");
     while (lines.next()) |line| {
         const pair = parsePair(line);
-        const overlap = pair.elf_1 | pair.elf_2;
-        if (@popCount(overlap) <= @max(@popCount(pair.elf_1), @popCount(pair.elf_2))) {
+        const overlap_union = pair.elf_1 | pair.elf_2;
+        const overlap_intersection = pair.elf_1 & pair.elf_2;
+        if (@popCount(overlap_union) <= @max(@popCount(pair.elf_1), @popCount(pair.elf_2))) {
             part01 += 1;
+        }
+        if (@popCount(overlap_intersection) > 0) {
+            part02 += 1;
         }
     }
 
@@ -45,13 +49,13 @@ fn parsePair(s: []const u8) Pair {
 
 fn parseAssignment(s: []const u8) Assignment {
     var section_range = std.mem.split(u8, s, "-");
-    const start = std.fmt.parseInt(u8, section_range.next().?, 10) catch unreachable;
-    const end = std.fmt.parseInt(u8, section_range.next().?, 10) catch unreachable;
+    const start = std.fmt.parseInt(u7, section_range.next().?, 10) catch unreachable;
+    const end = std.fmt.parseInt(u7, section_range.next().?, 10) catch unreachable;
 
     var assignment: u100 = 0;
-    var idx: usize = start;
+    var idx: u7 = start;
     while (idx <= end) : (idx += 1) {
-        assignment |= @as(u100, 1) << @intCast(u7, idx);
+        assignment |= @as(u100, 1) << idx;
     }
 
     return assignment;
@@ -69,5 +73,5 @@ test "test_day_03" {
 
     const out = run(input);
     try expectEqual(out.part01, 2);
-    try expectEqual(out.part02, 0);
+    try expectEqual(out.part02, 4);
 }
