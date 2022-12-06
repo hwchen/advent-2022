@@ -11,18 +11,13 @@ pub fn main() !void {
     defer arena.deinit();
     var alloc = arena.allocator();
 
-    const out = try run(data, alloc);
-    defer {
-        alloc.free(out.part01);
-        alloc.free(out.part02);
-    }
-    std.log.info("part 01: {s}, part02: {s}", .{ out.part01, out.part02 });
+    var stdout = std.io.getStdOut();
+    var wtr = stdout.writer();
+
+    try run(data, alloc, wtr);
 }
 
-fn run(input: []const u8, alloc: Allocator) !Solution {
-    var part01: []const u8 = "";
-    var part02: []const u8 = "";
-
+fn run(input: []const u8, alloc: Allocator, wtr: anytype) !void {
     const parsed_header = try parseHeader(input, alloc);
     var stacks01 = parsed_header.stacks;
     var stacks02 = try copyStacks(stacks01, alloc);
@@ -57,16 +52,10 @@ fn run(input: []const u8, alloc: Allocator) !Solution {
         }
     }
 
-    part01 = try writeStacksTop(stacks01, alloc);
-    part02 = try writeStacksTop(stacks02, alloc);
-
-    return .{ .part01 = part01, .part02 = part02 };
+    try writeStacks(stacks01, wtr);
+    try wtr.writeByte('\n');
+    try writeStacks(stacks02, wtr);
 }
-
-const Solution = struct {
-    part01: []const u8,
-    part02: []const u8,
-};
 
 const Stack = std.ArrayList(u8);
 
@@ -83,21 +72,14 @@ fn copyStacks(stacks: Stacks, alloc: Allocator) !Stacks {
     return res;
 }
 
-/// Caller must free
-fn writeStacksTop(stacks: Stacks, alloc: Allocator) ![]const u8 {
-    var buf = std.ArrayList(u8).init(alloc);
-    defer buf.deinit();
-    var writer = buf.writer();
-
+fn writeStacks(stacks: Stacks, wtr: anytype) !void {
     // ignore 0 idx
     var idx: usize = 1;
     while (idx < stacks.items.len) : (idx += 1) {
         const stack = stacks.items[idx];
         const stack_top = stack.items[stack.items.len - 1];
-        try writer.writeByte(stack_top);
+        try wtr.writeByte(stack_top);
     }
-
-    return buf.toOwnedSlice();
 }
 
 /// Takes whole input
@@ -168,11 +150,10 @@ test "test_day_05" {
         \\move 1 from 1 to 2
     ;
 
-    const out = try run(input, std.testing.allocator);
-    defer {
-        std.testing.allocator.free(out.part01);
-        std.testing.allocator.free(out.part02);
-    }
-    try expectEqualSlices(u8, out.part01, "CMZ");
-    try expectEqualSlices(u8, out.part02, "MCD");
+    var buf = std.ArrayList(u8).init(std.testing.allocator);
+    defer buf.deinit();
+    var wtr = buf.writer();
+
+    try run(input, std.testing.allocator, wtr);
+    try expectEqualSlices(u8, buf.items, "CMZ\nMCD");
 }
