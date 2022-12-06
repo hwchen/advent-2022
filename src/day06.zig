@@ -20,7 +20,7 @@ fn run(input: []const u8) struct { part01: u64, part02: u64 } {
 fn isUniqueChars(win: []const u8) bool {
     var bitset = @as(u26, 0);
     for (win) |c| {
-        bitset |= @as(u26, 1) << @intCast(u5, c - 97);
+        bitset |= @as(u26, 1) << @intCast(u5, c - 'a');
     }
 
     return @popCount(bitset) == win.len;
