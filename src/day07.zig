@@ -1,3 +1,6 @@
+//! Improvements (from https://github.com/SpexGuy/Advent2022/blob/main/src/day07.zig)
+//! Use arraylist for sizes as well as stack, id is just idx.
+
 const std = @import("std");
 const data = @embedFile("input/day07.txt");
 const expectEqual = std.testing.expectEqual;
