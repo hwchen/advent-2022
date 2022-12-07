@@ -13,7 +13,7 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const out = run(data, alloc);
+    const out = try run(data, alloc);
     std.log.info("part 01: {d}, part02: {d}", .{ out.part01, out.part02 });
 }
 
@@ -27,7 +27,13 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 }
 
     // Running totals of each dir size
     var dir_totals = HashMap(u64).init(alloc);
-    defer dir_totals.deinit();
+    defer {
+        var key_iter = dir_totals.keyIterator();
+        while (key_iter.next()) |key_ptr| {
+            alloc.free(key_ptr.*);
+        }
+        dir_totals.deinit();
+    }
 
     var lines = std.mem.tokenize(u8, input, "\n");
     while (lines.next()) |line| {
@@ -43,7 +49,10 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 }
                         // TODO does dirname need to be tagged w/ parent nodes?
                         const dirname = line[5..];
                         try ctx.append(dirname);
-                        try dir_totals.put(dirname, 0);
+
+                        // hashmap calls free
+                        const full_path = try fullPath(ctx.items, alloc);
+                        try dir_totals.put(full_path, 0);
                     },
                 },
                 else => unreachable,
@@ -54,8 +63,11 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 }
                 var split_idx = std.mem.indexOf(u8, line, " ").?;
                 const filesize = try std.fmt.parseInt(u64, line[0..split_idx], 10);
                 // file, w/ `n filename` structure
-                for (ctx.items) |dir| {
-                    var total = dir_totals.getPtr(dir).?;
+                var idx: usize = 0;
+                while (idx < ctx.items.len) : (idx += 1) {
+                    const full_path = try fullPath(ctx.items[0 .. idx + 1], alloc);
+                    defer alloc.free(full_path);
+                    var total = dir_totals.getPtr(full_path).?;
                     total.* += filesize;
                 }
             },
@@ -70,6 +82,16 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 }
     }
 
     return .{ .part01 = part01, .part02 = part02 };
+}
+
+// caller fress
+fn fullPath(ctx: []const []const u8, alloc: Allocator) ![]const u8 {
+    var buf = ArrayList(u8).init(alloc);
+    for (ctx) |sub_path| {
+        try buf.append('/');
+        try buf.appendSlice(sub_path);
+    }
+    return buf.toOwnedSlice();
 }
 
 test "test_day07" {
