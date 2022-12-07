@@ -18,8 +18,6 @@ pub fn main() !void {
 }
 
 fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 } {
-    var part01: usize = 0;
-    var part02: usize = 0;
 
     // While navigating the tree, curr dir + all parent dirs
     var ctx = ArrayList([]const u8).init(alloc);
@@ -45,12 +43,10 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 }
                     '.' => _ = ctx.pop(),
                     else => {
                         // cd: init dir total and add to ctx stack
-                        // TODO does this need to be allocated slice, since line will be lost?
-                        // TODO does dirname need to be tagged w/ parent nodes?
                         const dirname = line[5..];
                         try ctx.append(dirname);
 
-                        // hashmap calls free
+                        // hashmap calls free on keys
                         const full_path = try fullPath(ctx.items, alloc);
                         try dir_totals.put(full_path, 0);
                     },
@@ -74,10 +70,20 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: u64, part02: u64 }
         }
     }
 
+    var part01: usize = 0;
+    var part02: usize = std.math.maxInt(usize);
+
+    const root_size = dir_totals.get("//").?;
+    const free_space = 70_000_000 - root_size;
+
     var totals_it = dir_totals.valueIterator();
     while (totals_it.next()) |total| {
         if (total.* <= 100000) {
             part01 += total.*;
+        }
+
+        if (total.* <= part02 and free_space + total.* > 30_000_000) {
+            part02 = total.*;
         }
     }
 
@@ -123,5 +129,5 @@ test "test_day07" {
 
     const out = try run(input, std.testing.allocator);
     try expectEqual(out.part01, 95437);
-    try expectEqual(out.part02, 0);
+    try expectEqual(out.part02, 24933642);
 }
