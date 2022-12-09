@@ -1,6 +1,9 @@
 const std = @import("std");
 const data = @embedFile("input/day08.txt");
 const expectEqual = std.testing.expectEqual;
+const util = @import("util.zig");
+const Grid = util.Grid;
+const BitGrid = util.BitGrid;
 
 // required to print if release-fast
 pub const log_level: std.log.Level = .info;
@@ -50,13 +53,13 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
             while (from_edge < M) : (from_edge += 1) {
                 const l_tree = grid.get(row_idx, from_edge);
                 if (l_tree > l_max_height) {
-                    viz_from_left.set_visible(row_idx, from_edge);
+                    viz_from_left.set(row_idx, from_edge);
                     l_max_height = l_tree;
                 }
 
                 const r_tree = grid.get(row_idx, M - from_edge - 1);
                 if (r_tree > r_max_height) {
-                    viz_from_right.set_visible(row_idx, M - from_edge - 1);
+                    viz_from_right.set(row_idx, M - from_edge - 1);
                     r_max_height = r_tree;
                 }
             }
@@ -74,13 +77,13 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
             while (from_edge < N) : (from_edge += 1) {
                 const t_tree = grid.get(from_edge, col_idx);
                 if (t_tree > t_max_height) {
-                    viz_from_top.set_visible(from_edge, col_idx);
+                    viz_from_top.set(from_edge, col_idx);
                     t_max_height = t_tree;
                 }
 
                 const b_tree = grid.get(N - from_edge - 1, col_idx);
                 if (b_tree > b_max_height) {
-                    viz_from_bot.set_visible(N - from_edge - 1, col_idx);
+                    viz_from_bot.set(N - from_edge - 1, col_idx);
                     b_max_height = b_tree;
                 }
             }
@@ -94,44 +97,6 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
     var part02: usize = 0;
 
     return .{ .part01 = part01, .part02 = part02 };
-}
-
-// N is row idx, M is col idx
-fn Grid(comptime N: comptime_int, comptime M: comptime_int) type {
-    return struct {
-        items: [N * M]u8,
-
-        fn get(self: @This(), row: usize, col: usize) u8 {
-            return self.items[N * row + col];
-        }
-    };
-}
-
-fn BitGrid(comptime N: comptime_int, comptime M: comptime_int) type {
-    return struct {
-        bits: BitsType,
-
-        const Self = @This();
-
-        const BitsType = @Type(.{ .Int = .{
-            .bits = N * M,
-            .signedness = .unsigned,
-        } });
-
-        const ShiftType = @Type(.{ .Int = .{
-            .bits = std.math.log2(N * M) + 1,
-            .signedness = .unsigned,
-        } });
-
-        fn zero() Self {
-            return .{ .bits = 0 };
-        }
-
-        fn set_visible(self: *Self, n: usize, m: usize) void {
-            const idx = @intCast(ShiftType, n * N + m);
-            self.bits |= @as(BitsType, 1) << @intCast(ShiftType, idx);
-        }
-    };
 }
 
 test "test_day07" {
