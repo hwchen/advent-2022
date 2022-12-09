@@ -1,3 +1,7 @@
+//! improvements:
+//! - Use math.clamp instead of moving towards zero w/ `sign`
+//! - Only need to check for dx or dy == 2 and then clamp, don't need pre-check on dx or dy == 1 or 0
+
 const std = @import("std");
 const util = @import("util.zig");
 const data = @embedFile("input/day09.txt");
