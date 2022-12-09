@@ -16,7 +16,7 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const days = [_]u8{ 1, 2, 3, 4, 5, 6, 7 };
+    const days = [_]u8{ 1, 2, 3, 4, 5, 6, 7, 8 };
 
     inline for (days) |day| {
         const day_string = comptime std.fmt.comptimePrint("day{:0>2}", .{day});
