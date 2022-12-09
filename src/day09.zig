@@ -18,10 +18,14 @@ pub fn main() !void {
 }
 
 fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usize } {
-    var head = Point{ 0, 0 };
-    var tail = Point{ 0, 0 };
-    var trail = Set.init(alloc);
-    defer trail.deinit();
+    var part01_head = Point{ 0, 0 };
+    var part01_tail = Point{ 0, 0 };
+    var part01_trail = Set.init(alloc);
+    defer part01_trail.deinit();
+
+    var part02_rope = [_]Point{.{ 0, 0 }} ** 10;
+    var part02_trail = Set.init(alloc);
+    defer part02_trail.deinit();
 
     var lines = std.mem.tokenize(u8, input, "\n");
     while (lines.next()) |line| {
@@ -36,33 +40,48 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usi
 
         var i: isize = 0;
         while (i < num_steps) : (i += 1) {
-            try update_step(dir, &head, &tail);
-            try trail.put(tail, {});
+            // part01
+            part01_head += dir;
+            _ = try update_tail(part01_head, &part01_tail);
+            try part01_trail.put(part01_tail, {});
+
+            // part02, rope is 10 knots long
+            part02_rope[0] += dir;
+            var idx: usize = 0;
+            var curr_dir: Point = dir;
+            while (idx < 9) : (idx += 1) {
+                curr_dir = try update_tail(part02_rope[idx], &part02_rope[idx + 1]);
+            }
+            try part02_trail.put(part02_rope[9], {});
         }
     }
 
-    return .{ .part01 = trail.count(), .part02 = 0 };
+    return .{ .part01 = part01_trail.count(), .part02 = part02_trail.count() };
 }
 
 const Point = @Vector(2, isize);
 
-fn update_step(dir: Point, head: *Point, tail: *Point) !void {
+/// Returns the direction the tail moved.
+fn update_tail(head: Point, tail: *Point) !Point {
     const abs = std.math.absInt;
+    const sign = std.math.sign;
 
-    head.* += dir;
-    const dif = head.* - tail.*;
+    const dif = head - tail.*;
 
     // touching (overlap or diagonal count), do nothing
     // touching = all elements in dif btwn -1 and 1
-    if (try abs(dif[0]) <= 1 and try abs(dif[1]) <= 1) return;
+    if (try abs(dif[0]) <= 1 and try abs(dif[1]) <= 1) return Point{ 0, 0 };
 
     // If there's a diagonal separation, move into same row/col
-    // (one of the dif elements must be 2; shift the other col
-    if (try abs(dif[0]) == 2) tail.* += Point{ 0, dif[1] };
-    if (try abs(dif[1]) == 2) tail.* += Point{ dif[0], 0 };
+    // Then the dif that's 2, close space to head.
+    // (Having both as 2 is not a possible state)
+    const tail_move = Point{
+        if (try abs(dif[0]) == 2) dif[0] - sign(dif[0]) * 1 else dif[0],
+        if (try abs(dif[1]) == 2) dif[1] - sign(dif[1]) * 1 else dif[1],
+    };
+    tail.* += tail_move;
 
-    // move towards head
-    tail.* += dir;
+    return tail_move;
 }
 
 test "test_day09" {
@@ -79,5 +98,21 @@ test "test_day09" {
 
     const out = try run(input, std.testing.allocator);
     try expectEqual(out.part01, 13);
-    try expectEqual(out.part02, 0);
+    try expectEqual(out.part02, 1);
+}
+
+test "test_day09_part02" {
+    const input =
+        \\R 5
+        \\U 8
+        \\L 8
+        \\D 3
+        \\R 17
+        \\D 10
+        \\L 25
+        \\U 20
+    ;
+
+    const out = try run(input, std.testing.allocator);
+    try expectEqual(out.part02, 36);
 }
