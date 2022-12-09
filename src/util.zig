@@ -38,3 +38,7 @@ pub fn BitGrid(comptime M: comptime_int, comptime N: comptime_int) type {
         }
     };
 }
+
+pub fn Set(comptime T: type) type {
+    return std.AutoHashMap(T, void);
+}

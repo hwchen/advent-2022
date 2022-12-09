@@ -1,9 +1,10 @@
 const std = @import("std");
+const util = @import("util.zig");
 const data = @embedFile("input/day09.txt");
 const expectEqual = std.testing.expectEqual;
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-const Set = std.AutoHashMap(Point, void);
+const Set = util.Set;
 
 // required to print if release-fast
 pub const log_level: std.log.Level = .info;
@@ -20,11 +21,11 @@ pub fn main() !void {
 fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usize } {
     var part01_head = Point{ 0, 0 };
     var part01_tail = Point{ 0, 0 };
-    var part01_trail = Set.init(alloc);
+    var part01_trail = Set(Point).init(alloc);
     defer part01_trail.deinit();
 
     var part02_rope = [_]Point{.{ 0, 0 }} ** 10;
-    var part02_trail = Set.init(alloc);
+    var part02_trail = Set(Point).init(alloc);
     defer part02_trail.deinit();
 
     var lines = std.mem.tokenize(u8, input, "\n");
@@ -42,15 +43,14 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usi
         while (i < num_steps) : (i += 1) {
             // part01
             part01_head += dir;
-            _ = try update_tail(part01_head, &part01_tail);
+            try update_tail(part01_head, &part01_tail);
             try part01_trail.put(part01_tail, {});
 
             // part02, rope is 10 knots long
             part02_rope[0] += dir;
             var idx: usize = 0;
-            var curr_dir: Point = dir;
             while (idx < 9) : (idx += 1) {
-                curr_dir = try update_tail(part02_rope[idx], &part02_rope[idx + 1]);
+                try update_tail(part02_rope[idx], &part02_rope[idx + 1]);
             }
             try part02_trail.put(part02_rope[9], {});
         }
@@ -62,7 +62,7 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usi
 const Point = @Vector(2, isize);
 
 /// Returns the direction the tail moved.
-fn update_tail(head: Point, tail: *Point) !Point {
+fn update_tail(head: Point, tail: *Point) !void {
     const abs = std.math.absInt;
     const sign = std.math.sign;
 
@@ -70,7 +70,7 @@ fn update_tail(head: Point, tail: *Point) !Point {
 
     // touching (overlap or diagonal count), do nothing
     // touching = all elements in dif btwn -1 and 1
-    if (try abs(dif[0]) <= 1 and try abs(dif[1]) <= 1) return Point{ 0, 0 };
+    if (try abs(dif[0]) <= 1 and try abs(dif[1]) <= 1) return;
 
     // If there's a diagonal separation, move into same row/col
     // Then the dif that's 2, close space to head.
@@ -80,8 +80,6 @@ fn update_tail(head: Point, tail: *Point) !Point {
         if (try abs(dif[1]) == 2) dif[1] - sign(dif[1]) * 1 else dif[1],
     };
     tail.* += tail_move;
-
-    return tail_move;
 }
 
 test "test_day09" {
