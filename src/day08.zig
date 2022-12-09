@@ -25,13 +25,13 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
             num_rows += 1;
         }
 
-        break :blk .{ .N = num_rows, .M = line_len };
+        break :blk .{ .M = num_rows, .N = line_len };
     };
-    const N = grid_size.N;
     const M = grid_size.M;
+    const N = grid_size.N;
 
     // parse input into grid
-    var grid: Grid(N, M) = undefined;
+    var grid: Grid(M, N) = undefined;
 
     var grid_idx: usize = 0;
     for (input) |c| {
@@ -42,48 +42,48 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
     }
 
     // Check from visibility from each direction
-    var viz_from_left = BitGrid(N, M).zero();
-    var viz_from_right = BitGrid(N, M).zero();
+    var viz_from_left = BitGrid(M, N).zero();
+    var viz_from_right = BitGrid(M, N).zero();
     {
         var row_idx: usize = 0;
-        while (row_idx < N) : (row_idx += 1) {
+        while (row_idx < M) : (row_idx += 1) {
             var l_max_height: usize = 0;
             var r_max_height: usize = 0;
             var from_edge: usize = 0;
-            while (from_edge < M) : (from_edge += 1) {
+            while (from_edge < N) : (from_edge += 1) {
                 const l_tree = grid.get(row_idx, from_edge);
                 if (l_tree > l_max_height) {
                     viz_from_left.set(row_idx, from_edge);
                     l_max_height = l_tree;
                 }
 
-                const r_tree = grid.get(row_idx, M - from_edge - 1);
+                const r_tree = grid.get(row_idx, N - from_edge - 1);
                 if (r_tree > r_max_height) {
-                    viz_from_right.set(row_idx, M - from_edge - 1);
+                    viz_from_right.set(row_idx, N - from_edge - 1);
                     r_max_height = r_tree;
                 }
             }
         }
     }
 
-    var viz_from_top = BitGrid(grid_size.N, grid_size.M).zero();
-    var viz_from_bot = BitGrid(grid_size.N, grid_size.M).zero();
+    var viz_from_top = BitGrid(M, N).zero();
+    var viz_from_bot = BitGrid(M, N).zero();
     {
         var col_idx: usize = 0;
-        while (col_idx < M) : (col_idx += 1) {
+        while (col_idx < N) : (col_idx += 1) {
             var t_max_height: usize = 0;
             var b_max_height: usize = 0;
             var from_edge: usize = 0;
-            while (from_edge < N) : (from_edge += 1) {
+            while (from_edge < M) : (from_edge += 1) {
                 const t_tree = grid.get(from_edge, col_idx);
                 if (t_tree > t_max_height) {
                     viz_from_top.set(from_edge, col_idx);
                     t_max_height = t_tree;
                 }
 
-                const b_tree = grid.get(N - from_edge - 1, col_idx);
+                const b_tree = grid.get(M - from_edge - 1, col_idx);
                 if (b_tree > b_max_height) {
-                    viz_from_bot.set(N - from_edge - 1, col_idx);
+                    viz_from_bot.set(M - from_edge - 1, col_idx);
                     b_max_height = b_tree;
                 }
             }
