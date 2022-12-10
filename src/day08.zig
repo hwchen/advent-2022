@@ -54,7 +54,11 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
             while (n < N) : (n += 1) {
                 var view: View = undefined;
                 for (directions) |dir, i| {
-                    view[i] = viewDistance(dir, m, n, grid);
+                    const view_res = viewDistance(dir, m, n, grid);
+                    view.view[i] = view_res[0];
+                    if (view_res[1] == .oob) {
+                        view.oob = .oob;
+                    }
                 }
                 res.set(view, m, n);
             }
@@ -66,26 +70,39 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
     const part01 = blk: {
         var res: usize = 0;
 
-        var m: usize = 0;
-        while (m < M) : (m += 1) {
-            var n: usize = 0;
-            while (n < N) : (n += 1) {
-                const view = views.get(m, n);
-                if (view[0] > m or view[1] > M - m - 1 or view[2] > n or view[3] > N - n - 1) {
-                    res += 1;
-                }
+        for (views.items) |item| {
+            // if any view is oob, it passed the edge
+            if (item.oob == .oob) {
+                res += 1;
+            }
+        }
+
+        break :blk res;
+    };
+
+    // part02 scoring
+    const part02 = blk: {
+        var res: usize = 0;
+
+        for (views.items) |item| {
+            const view_sum = @reduce(.Mul, item.view);
+            if (view_sum > res) {
+                res = view_sum;
             }
         }
         break :blk res;
     };
 
-    return .{ .part01 = part01, .part02 = 0 };
+    return .{ .part01 = part01, .part02 = part02 };
 }
 
 const Point = @Vector(2, isize);
 
 /// UDLR
-const View = @Vector(4, usize);
+const View = struct {
+    view: @Vector(4, usize),
+    oob: Oob,
+};
 
 /// UDLR in xy coords (not mn matrix coords)
 /// This is probably a mistake, to switch coords...
@@ -97,8 +114,13 @@ const directions = [_]Point{
     .{ 1, 0 },
 };
 
+const Oob = enum {
+    oob,
+    not_oob,
+};
+
 /// grid is of type Grid(u8, M, N)
-fn viewDistance(dir: Point, m: usize, n: usize, grid: anytype) usize {
+fn viewDistance(dir: Point, m: usize, n: usize, grid: anytype) struct { usize, Oob } {
     const tree_height = grid.get(m, n);
     var tree_loc = Point{ @intCast(isize, n), @intCast(isize, m) } + dir;
     var idx: usize = 0;
@@ -113,17 +135,17 @@ fn viewDistance(dir: Point, m: usize, n: usize, grid: anytype) usize {
         const tree_m = @intCast(usize, tree_loc[1]);
         const tree_n = @intCast(usize, tree_loc[0]);
         if (grid.get(tree_m, tree_n) >= tree_height) {
-            return idx;
+            return .{ idx, .not_oob };
         }
 
         tree_loc += dir;
     }
 
-    // It's reached the edge, so give it an extra view so we know it's visible from outside
-    return idx + 1;
+    // It's reached the edge, so oob
+    return .{ idx, .oob };
 }
 
-test "test_day07" {
+test "test_day08" {
     const input =
         \\30373
         \\25512
@@ -134,5 +156,5 @@ test "test_day07" {
 
     const out = run(input);
     try expectEqual(out.part01, 21);
-    try expectEqual(out.part02, 0);
+    try expectEqual(out.part02, 8);
 }
