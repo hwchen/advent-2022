@@ -1,9 +1,12 @@
+//! part01 originally implemented as wavefront for each direction, then `|` them together.
+//!
+//! refactored to nested loops for part02
+
 const std = @import("std");
 const data = @embedFile("input/day08.txt");
 const expectEqual = std.testing.expectEqual;
 const util = @import("util.zig");
-const Grid = util.Grid;
-const BitGrid = util.BitGrid;
+const Grid = util.StaticGrid;
 
 // required to print if release-fast
 pub const log_level: std.log.Level = .info;
@@ -31,7 +34,7 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
     const N = grid_size.N;
 
     // parse input into grid
-    var grid: Grid(M, N) = undefined;
+    var grid: Grid(u8, M, N) = undefined;
 
     var grid_idx: usize = 0;
     for (input) |c| {
@@ -41,62 +44,83 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
         }
     }
 
-    // Check from visibility from each direction
-    var viz_from_left = BitGrid(M, N).zero();
-    var viz_from_right = BitGrid(M, N).zero();
-    {
-        var row_idx: usize = 0;
-        while (row_idx < M) : (row_idx += 1) {
-            var l_max_height: usize = 0;
-            var r_max_height: usize = 0;
-            var from_edge: usize = 0;
-            while (from_edge < N) : (from_edge += 1) {
-                const l_tree = grid.get(row_idx, from_edge);
-                if (l_tree > l_max_height) {
-                    viz_from_left.set(row_idx, from_edge);
-                    l_max_height = l_tree;
-                }
+    // loop through to check each tree's view
+    var views = blk: {
+        var res: Grid(View, M, N) = undefined;
 
-                const r_tree = grid.get(row_idx, N - from_edge - 1);
-                if (r_tree > r_max_height) {
-                    viz_from_right.set(row_idx, N - from_edge - 1);
-                    r_max_height = r_tree;
+        var m: usize = 0;
+        while (m < M) : (m += 1) {
+            var n: usize = 0;
+            while (n < N) : (n += 1) {
+                var view: View = undefined;
+                for (directions) |dir, i| {
+                    view[i] = viewDistance(dir, m, n, grid);
+                }
+                res.set(view, m, n);
+            }
+        }
+        break :blk res;
+    };
+
+    // part 01 scoring
+    const part01 = blk: {
+        var res: usize = 0;
+
+        var m: usize = 0;
+        while (m < M) : (m += 1) {
+            var n: usize = 0;
+            while (n < N) : (n += 1) {
+                const view = views.get(m, n);
+                if (view[0] > m or view[1] > M - m - 1 or view[2] > n or view[3] > N - n - 1) {
+                    res += 1;
                 }
             }
         }
-    }
+        break :blk res;
+    };
 
-    var viz_from_top = BitGrid(M, N).zero();
-    var viz_from_bot = BitGrid(M, N).zero();
-    {
-        var col_idx: usize = 0;
-        while (col_idx < N) : (col_idx += 1) {
-            var t_max_height: usize = 0;
-            var b_max_height: usize = 0;
-            var from_edge: usize = 0;
-            while (from_edge < M) : (from_edge += 1) {
-                const t_tree = grid.get(from_edge, col_idx);
-                if (t_tree > t_max_height) {
-                    viz_from_top.set(from_edge, col_idx);
-                    t_max_height = t_tree;
-                }
+    return .{ .part01 = part01, .part02 = 0 };
+}
 
-                const b_tree = grid.get(M - from_edge - 1, col_idx);
-                if (b_tree > b_max_height) {
-                    viz_from_bot.set(M - from_edge - 1, col_idx);
-                    b_max_height = b_tree;
-                }
-            }
+const Point = @Vector(2, isize);
+
+/// UDLR
+const View = @Vector(4, usize);
+
+/// UDLR in xy coords (not mn matrix coords)
+/// This is probably a mistake, to switch coords...
+/// 0,0 is in upper left
+const directions = [_]Point{
+    .{ 0, -1 },
+    .{ 0, 1 },
+    .{ -1, 0 },
+    .{ 1, 0 },
+};
+
+/// grid is of type Grid(u8, M, N)
+fn viewDistance(dir: Point, m: usize, n: usize, grid: anytype) usize {
+    const tree_height = grid.get(m, n);
+    var tree_loc = Point{ @intCast(isize, n), @intCast(isize, m) } + dir;
+    var idx: usize = 0;
+
+    const M = @TypeOf(grid).M;
+    const N = @TypeOf(grid).N;
+
+    // check oob
+    while (tree_loc[0] < N and tree_loc[0] >= 0 and tree_loc[1] < M and tree_loc[1] >= 0) {
+        idx += 1;
+
+        const tree_m = @intCast(usize, tree_loc[1]);
+        const tree_n = @intCast(usize, tree_loc[0]);
+        if (grid.get(tree_m, tree_n) >= tree_height) {
+            return idx;
         }
+
+        tree_loc += dir;
     }
 
-    // Overlay visibility BitGrids for final result and count.
-    const visibility = viz_from_left.bits | viz_from_right.bits | viz_from_top.bits | viz_from_bot.bits;
-
-    var part01: usize = @popCount(visibility);
-    var part02: usize = 0;
-
-    return .{ .part01 = part01, .part02 = part02 };
+    // It's reached the edge, so give it an extra view so we know it's visible from outside
+    return idx + 1;
 }
 
 test "test_day07" {

@@ -1,12 +1,21 @@
 const std = @import("std");
 
 // N is row idx, M is col idx
-pub fn Grid(comptime M: comptime_int, comptime N: comptime_int) type {
+pub fn StaticGrid(comptime T: type, comptime M_: comptime_int, comptime N_: comptime_int) type {
     return struct {
-        items: [M * N]u8,
+        items: [M * N]T,
 
-        pub fn get(self: @This(), row: usize, col: usize) u8 {
+        pub const M = M_;
+        pub const N = N_;
+
+        const Self = @This();
+
+        pub fn get(self: Self, row: usize, col: usize) T {
             return self.items[M * row + col];
+        }
+
+        pub fn set(self: *Self, x: T, row: usize, col: usize) void {
+            self.items[M * row + col] = x;
         }
     };
 }
