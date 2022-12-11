@@ -1,3 +1,6 @@
+//! I think that modeling the CPU made it harder to solve the problem, and made it harder to see where
+//! to +1 in the cycle. Simple procedural solution would still have been better.
+
 const std = @import("std");
 const data = @embedFile("input/day10.txt");
 const expectEqual = std.testing.expectEqual;
