@@ -77,27 +77,51 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
     //std.debug.print("{any}\n", .{operations});
     //std.debug.print("{any}\n", .{tests});
 
-    // run program
-    var inspections = [_]usize{0} ** num_monkeys;
-
-    var round: usize = 0;
-    while (round < 20) : (round += 1) {
-        var monkey: usize = 0;
-        while (monkey < num_monkeys) : (monkey += 1) {
-            for (queues[monkey].items) |q_item| {
-                const worry_level = operations[monkey].exec(q_item) / 3;
-                const item_to_monkey = tests[monkey].exec(worry_level);
-                try queues[item_to_monkey].append(worry_level);
-                inspections[monkey] += 1;
+    // run program part01
+    var inspections_part01 = blk: {
+        var inspections = [_]usize{0} ** num_monkeys;
+        var round: usize = 0;
+        while (round < 20) : (round += 1) {
+            var monkey: usize = 0;
+            while (monkey < num_monkeys) : (monkey += 1) {
+                for (queues[monkey].items) |q_item| {
+                    const worry_level = operations[monkey].exec(q_item) / 3;
+                    const item_to_monkey = tests[monkey].exec(worry_level);
+                    try queues[item_to_monkey].append(worry_level);
+                    inspections[monkey] += 1;
+                }
+                queues[monkey].clearRetainingCapacity();
             }
-            queues[monkey].clearRetainingCapacity();
         }
-    }
+        break :blk inspections;
+    };
 
-    std.sort.sort(usize, &inspections, {}, std.sort.desc(usize));
-    //std.debug.print("{any}\n", .{inspections});
+    // run program part02
+    var inspections_part02 = blk: {
+        var inspections = [_]usize{0} ** num_monkeys;
+        var round: usize = 0;
+        while (round < 1000) : (round += 1) {
+            var monkey: usize = 0;
+            while (monkey < num_monkeys) : (monkey += 1) {
+                for (queues[monkey].items) |q_item| {
+                    const worry_level = operations[monkey].exec(q_item);
+                    const item_to_monkey = tests[monkey].exec(worry_level);
+                    try queues[item_to_monkey].append(worry_level);
+                    inspections[monkey] += 1;
+                }
+                queues[monkey].clearRetainingCapacity();
+            }
+        }
+        break :blk inspections;
+    };
 
-    return .{ inspections[0] * inspections[1], 0 };
+    std.sort.sort(usize, &inspections_part01, {}, std.sort.desc(usize));
+    std.sort.sort(usize, &inspections_part02, {}, std.sort.desc(usize));
+
+    return .{
+        inspections_part01[0] * inspections_part01[1],
+        inspections_part02[0] * inspections_part02[1],
+    };
 }
 
 // Is there a way to do this currying w/ fn pointers?
@@ -105,6 +129,10 @@ const Operation = struct {
     op: Op,
     rhs: ?usize,
 
+    // All multiplications are by prime numbers, and all tests are
+    // dividing by prime numbers. So mul ops can return just "old",
+    // since multiplying a prime (or by squaring) doesn't give any
+    // new information for a div-by-prime test.
     pub fn exec(self: Operation, old: usize) usize {
         switch (self.op) {
             .mul => if (self.rhs) |rhs| {
@@ -180,5 +208,5 @@ test "test_day11" {
 
     const out = try run(input, std.testing.allocator);
     try expectEqual(out[0], 10605);
-    try expectEqual(out[1], 0);
+    try expectEqual(out[1], 2713310158);
 }
