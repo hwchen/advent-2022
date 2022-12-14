@@ -1,3 +1,5 @@
+//! part02, saw that divisibility tests are all prime, but had to get hints to see that it's possible to do wrapping w/ LCD of all test divisors. (I think I had considered doing it separately for each monkeytest, but that seemed a pain to add)
+
 const std = @import("std");
 const mem = std.mem;
 const data = @embedFile("input/day11.txt");
@@ -34,13 +36,16 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
 
     // parse
 
-    var queues = [_]ArrayList(usize){undefined} ** num_monkeys;
-    for (queues) |*queue| {
+    var queues_part01 = [_]ArrayList(usize){undefined} ** num_monkeys;
+    for (queues_part01) |*queue| {
         queue.* = ArrayList(usize).init(alloc);
     }
-    defer for (queues) |queue| queue.deinit();
+    defer for (queues_part01) |queue| queue.deinit();
     var operations = [_]Operation{undefined} ** num_monkeys;
     var tests = [_]Test{undefined} ** num_monkeys;
+
+    // modulus for "wrapping" all monkey's divisibility checks
+    var modulus: usize = 1;
 
     var monkeys_init = mem.split(u8, input, "\n\n");
     var idx: usize = 0;
@@ -50,7 +55,7 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
 
         var starting_items_it = mem.tokenize(u8, monkey_init.next().?[18..], ", ");
         while (starting_items_it.next()) |item| {
-            try queues[idx].append(try std.fmt.parseInt(usize, item, 10));
+            try queues_part01[idx].append(try std.fmt.parseInt(usize, item, 10));
         }
 
         var operation_str = monkey_init.next().?;
@@ -62,8 +67,10 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
         };
         operations[idx] = operation;
 
+        const divisible_by = try parseInt(usize, monkey_init.next().?[21..], 10);
+        modulus *= divisible_by;
         var tst = Test{
-            .divisible_by = try parseInt(usize, monkey_init.next().?[21..], 10),
+            .divisible_by = divisible_by,
             .if_true = try parseInt(usize, monkey_init.next().?[29..], 10),
             .if_false = try parseInt(usize, monkey_init.next().?[30..], 10),
         };
@@ -71,6 +78,12 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
 
         idx += 1;
     }
+    var queues_part02 = [_]ArrayList(usize){undefined} ** num_monkeys;
+    var clone_idx: usize = 0;
+    while (clone_idx < num_monkeys) : (clone_idx += 1) {
+        queues_part02[clone_idx] = try queues_part01[clone_idx].clone();
+    }
+    defer for (queues_part02) |queue| queue.deinit();
 
     //std.debug.print("{d}\n", .{num_monkeys});
     //std.debug.print("{any}\n", .{queues});
@@ -84,13 +97,13 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
         while (round < 20) : (round += 1) {
             var monkey: usize = 0;
             while (monkey < num_monkeys) : (monkey += 1) {
-                for (queues[monkey].items) |q_item| {
+                for (queues_part01[monkey].items) |q_item| {
                     const worry_level = operations[monkey].exec(q_item) / 3;
                     const item_to_monkey = tests[monkey].exec(worry_level);
-                    try queues[item_to_monkey].append(worry_level);
+                    try queues_part01[item_to_monkey].append(worry_level);
                     inspections[monkey] += 1;
                 }
-                queues[monkey].clearRetainingCapacity();
+                queues_part01[monkey].clearRetainingCapacity();
             }
         }
         break :blk inspections;
@@ -100,16 +113,16 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
     var inspections_part02 = blk: {
         var inspections = [_]usize{0} ** num_monkeys;
         var round: usize = 0;
-        while (round < 1000) : (round += 1) {
+        while (round < 10_000) : (round += 1) {
             var monkey: usize = 0;
             while (monkey < num_monkeys) : (monkey += 1) {
-                for (queues[monkey].items) |q_item| {
-                    const worry_level = operations[monkey].exec(q_item);
+                for (queues_part02[monkey].items) |q_item| {
+                    const worry_level = operations[monkey].exec(q_item) % modulus;
                     const item_to_monkey = tests[monkey].exec(worry_level);
-                    try queues[item_to_monkey].append(worry_level);
+                    try queues_part02[item_to_monkey].append(worry_level);
                     inspections[monkey] += 1;
                 }
-                queues[monkey].clearRetainingCapacity();
+                queues_part02[monkey].clearRetainingCapacity();
             }
         }
         break :blk inspections;
