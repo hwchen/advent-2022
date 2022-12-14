@@ -28,13 +28,13 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
             num_rows += 1;
         }
 
-        break :blk .{ .M = num_rows, .N = line_len };
+        break :blk .{ .X = line_len, .Y = num_rows };
     };
-    const M = grid_size.M;
-    const N = grid_size.N;
+    const X = grid_size.X;
+    const Y = grid_size.Y;
 
     // parse input into grid
-    var grid: Grid(u8, M, N) = undefined;
+    var grid: Grid(u8, X, Y) = undefined;
 
     var grid_idx: usize = 0;
     for (input) |c| {
@@ -46,21 +46,21 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
 
     // loop through to check each tree's view
     var views = blk: {
-        var res: Grid(View, M, N) = undefined;
+        var res: Grid(View, X, Y) = undefined;
 
-        var m: usize = 0;
-        while (m < M) : (m += 1) {
-            var n: usize = 0;
-            while (n < N) : (n += 1) {
+        var x: usize = 0;
+        while (x < X) : (x += 1) {
+            var y: usize = 0;
+            while (y < Y) : (y += 1) {
                 var view: View = undefined;
                 for (directions) |dir, i| {
-                    const view_res = viewDistance(dir, m, n, grid);
+                    const view_res = viewDistance(dir, x, y, grid);
                     view.view[i] = view_res[0];
                     if (view_res[1] == .oob) {
                         view.oob = .oob;
                     }
                 }
-                res.set(view, m, n);
+                res.set(view, x, y);
             }
         }
         break :blk res;
@@ -104,12 +104,11 @@ const View = struct {
     oob: Oob,
 };
 
-/// UDLR in xy coords (not mn matrix coords)
-/// This is probably a mistake, to switch coords...
+/// UDLR in xy coords
 /// 0,0 is in upper left
 const directions = [_]Point{
-    .{ 0, -1 },
     .{ 0, 1 },
+    .{ 0, -1 },
     .{ -1, 0 },
     .{ 1, 0 },
 };
@@ -120,21 +119,21 @@ const Oob = enum {
 };
 
 /// grid is of type Grid(u8, M, N)
-fn viewDistance(dir: Point, m: usize, n: usize, grid: anytype) struct { usize, Oob } {
-    const tree_height = grid.get(m, n);
-    var tree_loc = Point{ @intCast(isize, n), @intCast(isize, m) } + dir;
+fn viewDistance(dir: Point, x: usize, y: usize, grid: anytype) struct { usize, Oob } {
+    const tree_height = grid.get(x, y);
+    var tree_loc = Point{ @intCast(isize, x), @intCast(isize, y) } + dir;
     var idx: usize = 0;
 
-    const M = @TypeOf(grid).M;
-    const N = @TypeOf(grid).N;
+    const X = @TypeOf(grid).X;
+    const Y = @TypeOf(grid).Y;
 
     // check oob
-    while (tree_loc[0] < N and tree_loc[0] >= 0 and tree_loc[1] < M and tree_loc[1] >= 0) {
+    while (tree_loc[0] < X and tree_loc[0] >= 0 and tree_loc[1] < Y and tree_loc[1] >= 0) {
         idx += 1;
 
-        const tree_m = @intCast(usize, tree_loc[1]);
-        const tree_n = @intCast(usize, tree_loc[0]);
-        if (grid.get(tree_m, tree_n) >= tree_height) {
+        const tree_x = @intCast(usize, tree_loc[0]);
+        const tree_y = @intCast(usize, tree_loc[1]);
+        if (grid.get(tree_x, tree_y) >= tree_height) {
             return .{ idx, .not_oob };
         }
 

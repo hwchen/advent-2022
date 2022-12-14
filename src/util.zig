@@ -1,39 +1,37 @@
 const std = @import("std");
 
-// N is row idx, M is col idx
-pub fn StaticGrid(comptime T: type, comptime M_: comptime_int, comptime N_: comptime_int) type {
+pub fn StaticGrid(comptime T: type, comptime X_: comptime_int, comptime Y_: comptime_int) type {
     return struct {
-        items: [M * N]T,
+        items: [X * Y]T,
 
-        pub const M = M_;
-        pub const N = N_;
+        pub const X = X_;
+        pub const Y = Y_;
 
         const Self = @This();
 
-        pub fn get(self: Self, row: usize, col: usize) T {
-            return self.items[M * row + col];
+        pub fn get(self: Self, x: usize, y: usize) T {
+            return self.items[Y * y + x];
         }
 
-        pub fn set(self: *Self, x: T, row: usize, col: usize) void {
-            self.items[M * row + col] = x;
+        pub fn set(self: *Self, elem: T, x: usize, y: usize) void {
+            self.items[Y * y + x] = elem;
         }
     };
 }
 
-// N is row idx, M is col idx
-pub fn BitGrid(comptime M: comptime_int, comptime N: comptime_int) type {
+pub fn BitGrid(comptime X: comptime_int, comptime Y: comptime_int) type {
     return struct {
         bits: BitsType,
 
         const Self = @This();
 
         const BitsType = @Type(.{ .Int = .{
-            .bits = M * N,
+            .bits = X * Y,
             .signedness = .unsigned,
         } });
 
         const ShiftType = @Type(.{ .Int = .{
-            .bits = std.math.log2(M * N) + 1,
+            .bits = std.math.log2(X * Y) + 1,
             .signedness = .unsigned,
         } });
 
@@ -41,8 +39,8 @@ pub fn BitGrid(comptime M: comptime_int, comptime N: comptime_int) type {
             return .{ .bits = 0 };
         }
 
-        pub fn set(self: *Self, m: usize, n: usize) void {
-            const idx = @intCast(ShiftType, m * M + n);
+        pub fn set(self: *Self, x: usize, y: usize) void {
+            const idx = @intCast(ShiftType, y * Y + x);
             self.bits |= @as(BitsType, 1) << @intCast(ShiftType, idx);
         }
     };

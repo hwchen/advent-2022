@@ -149,7 +149,6 @@ const Crt = struct {
 
     // don't worry about correct API here, this is most direct
     pub fn writeBuf(self: *Self, cycle: i64, register: i64) void {
-        std.debug.print("{d}\n", .{cycle});
         const sprite_for_line = @divTrunc(cycle, 40) * 40 + register; //inefficient to do in hot loop
         var sprite = [_]i64{ sprite_for_line - 1, sprite_for_line, sprite_for_line + 1 };
 
