@@ -1,5 +1,7 @@
 const std = @import("std");
 
+pub const Point = @Vector(2, isize);
+
 pub fn StaticGrid(comptime T: type, comptime X_: comptime_int, comptime Y_: comptime_int) type {
     return struct {
         items: [X * Y]T,
@@ -15,6 +17,16 @@ pub fn StaticGrid(comptime T: type, comptime X_: comptime_int, comptime Y_: comp
 
         pub fn set(self: *Self, elem: T, x: usize, y: usize) void {
             self.items[Y * y + x] = elem;
+        }
+
+        pub fn getPoint(self: Self, pt: Point) T {
+            return self.items[X * @intCast(usize, pt[1]) + @intCast(usize, pt[0])];
+        }
+
+        pub fn indexFromRaw(raw_idx: usize) Point {
+            const x = @intCast(isize, raw_idx % Self.X);
+            const y = @intCast(isize, raw_idx / Self.X);
+            return Point{ x, y };
         }
     };
 }
