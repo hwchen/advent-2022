@@ -14,16 +14,19 @@ pub fn build(b: *std.build.Builder) void {
 
     // Standard release options allow the person running `zig build` to select
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
     const days = [_]u8{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 };
 
     inline for (days) |day| {
         const day_string = comptime std.fmt.comptimePrint("day{:0>2}", .{day});
 
-        const exe = b.addExecutable(day_string, "src/" ++ day_string ++ ".zig");
-        exe.setTarget(target);
-        exe.setBuildMode(mode);
+        const exe = b.addExecutable(.{
+            .name = day_string,
+            .root_source_file = .{ .path = "src/" ++ day_string ++ ".zig" },
+            .target = target,
+            .optimize = optimize,
+        });
         exe.install();
 
         const run_cmd = exe.run();
