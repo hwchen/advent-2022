@@ -161,8 +161,7 @@ const Crt = struct {
     }
 
     pub fn flush(self: Self, wtr: anytype) !void {
-        var idx: usize = 0;
-        while (idx < 5) : (idx += 1) {
+        for (0..5) |idx| {
             _ = try Crt.flushLine(self.buf[idx * 40 .. idx * 40 + 40], wtr);
             _ = try wtr.writeByte('\n');
         }

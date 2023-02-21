@@ -27,8 +27,7 @@ fn isUniqueChars(win: []const u8) bool {
 }
 
 fn indexOfStart(msg: []const u8, marker_size: usize) u64 {
-    var idx: usize = 0;
-    while (idx < msg.len - marker_size) : (idx += 1) {
+    for (0 < msg.len - marker_size) |idx| {
         if (isUniqueChars(msg[idx .. idx + marker_size])) {
             return idx + marker_size;
         }

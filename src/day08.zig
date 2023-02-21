@@ -48,10 +48,8 @@ fn run(comptime input: []const u8) struct { part01: u64, part02: u64 } {
     var views = blk: {
         var res: Grid(View, X, Y) = undefined;
 
-        var x: usize = 0;
-        while (x < X) : (x += 1) {
-            var y: usize = 0;
-            while (y < Y) : (y += 1) {
+        for (0..X) |x| {
+            for (0..Y) |y| {
                 var view: View = undefined;
                 for (directions, 0..) |dir, i| {
                     const view_res = viewDistance(dir, x, y, grid);

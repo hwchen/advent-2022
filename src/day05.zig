@@ -37,8 +37,7 @@ fn run(input: []const u8, alloc: Allocator, wtr: anytype) !void {
 
         // part01
         {
-            var idx: usize = 0;
-            while (idx < n) : (idx += 1) {
+            for (0..n) |_| {
                 const crate = stacks01.items[from].pop();
                 try stacks01.items[to].append(crate);
             }
@@ -74,8 +73,7 @@ fn copyStacks(stacks: Stacks, alloc: Allocator) !Stacks {
 
 fn writeStacks(stacks: Stacks, wtr: anytype) !void {
     // ignore 0 idx
-    var idx: usize = 1;
-    while (idx < stacks.items.len) : (idx += 1) {
+    for (1..stacks.items.len) |idx| {
         const stack = stacks.items[idx];
         const stack_top = stack.items[stack.items.len - 1];
         try wtr.writeByte(stack_top);

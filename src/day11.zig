@@ -79,8 +79,7 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
         idx += 1;
     }
     var queues_part02 = [_]ArrayList(usize){undefined} ** num_monkeys;
-    var clone_idx: usize = 0;
-    while (clone_idx < num_monkeys) : (clone_idx += 1) {
+    for (0..num_monkeys) |clone_idx| {
         queues_part02[clone_idx] = try queues_part01[clone_idx].clone();
     }
     defer for (queues_part02) |queue| queue.deinit();
@@ -93,10 +92,8 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
     // run program part01
     var inspections_part01 = blk: {
         var inspections = [_]usize{0} ** num_monkeys;
-        var round: usize = 0;
-        while (round < 20) : (round += 1) {
-            var monkey: usize = 0;
-            while (monkey < num_monkeys) : (monkey += 1) {
+        for (0..20) |_| {
+            for (0..num_monkeys) |monkey| {
                 for (queues_part01[monkey].items) |q_item| {
                     const worry_level = operations[monkey].exec(q_item) / 3;
                     const item_to_monkey = tests[monkey].exec(worry_level);

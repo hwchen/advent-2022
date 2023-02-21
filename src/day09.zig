@@ -34,7 +34,7 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usi
 
     var lines = std.mem.tokenize(u8, input, "\n");
     while (lines.next()) |line| {
-        const num_steps = try std.fmt.parseInt(isize, line[2..], 10);
+        const num_steps = try std.fmt.parseInt(usize, line[2..], 10);
         const dir: Point = switch (line[0]) {
             'U' => .{ 0, 1 },
             'D' => .{ 0, -1 },
@@ -43,8 +43,7 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usi
             else => unreachable,
         };
 
-        var i: isize = 0;
-        while (i < num_steps) : (i += 1) {
+        for (0..num_steps) |_| {
             // part01
             part01_head += dir;
             try update_tail(part01_head, &part01_tail);
@@ -52,8 +51,7 @@ fn run(input: []const u8, alloc: Allocator) !struct { part01: usize, part02: usi
 
             // part02, rope is 10 knots long
             part02_rope[0] += dir;
-            var idx: usize = 0;
-            while (idx < 9) : (idx += 1) {
+            for (0..9) |idx| {
                 try update_tail(part02_rope[idx], &part02_rope[idx + 1]);
             }
             try part02_trail.put(part02_rope[9], {});
