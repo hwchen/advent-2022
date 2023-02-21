@@ -37,7 +37,7 @@ fn run(comptime input: []const u8, alloc: Allocator) !struct { usize, usize } {
     // parse
 
     var queues_part01 = [_]ArrayList(usize){undefined} ** num_monkeys;
-    for (queues_part01) |*queue| {
+    for (&queues_part01) |*queue| {
         queue.* = ArrayList(usize).init(alloc);
     }
     defer for (queues_part01) |queue| queue.deinit();

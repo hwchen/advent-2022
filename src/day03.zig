@@ -28,10 +28,8 @@ fn run(input: []const u8) struct { part01: u64, part02: u64 } {
         var rucksack_2 = line[half_idx..];
 
         blk: {
-            var i: usize = 0;
-            while (i < rucksack_1.len) : (i += 1) {
-                var j: usize = 0;
-                while (j < rucksack_2.len) : (j += 1) {
+            for (0..rucksack_1.len) |i| {
+                for (0..rucksack_2.len) |j| {
                     if (rucksack_1[i] == rucksack_2[j]) {
                         switch (rucksack_1[i]) {
                             'a'...'z' => part01 += rucksack_1[i] - 96,
