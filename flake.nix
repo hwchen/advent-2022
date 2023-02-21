@@ -35,7 +35,7 @@
         in {
         devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
-        pkgs.zigpkgs.master-2023-02-19
+        pkgs.zigpkgs.master-2023-02-21
         zls
         ];
       };
