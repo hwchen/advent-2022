@@ -11,16 +11,16 @@
       };
     };
 
-    #zls-flake = {
-    #  url = "github:zigtools/zls";
-    #  inputs = {
-    #    nixpkgs.follows = "nixpkgs";
-    #    zig-overlay.follows = "zig-overlay";
-    #  };
-    #};
+    zls-flake = {
+      url = "github:zigtools/zls";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        zig-overlay.follows = "zig-overlay";
+      };
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils, zig-overlay, }: #zls-flake }:
+  outputs = { self, nixpkgs, flake-utils, zig-overlay, zls-flake }:
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
         inherit system;
@@ -29,14 +29,14 @@
         ];
         };
 
-        #zls = zls-flake.packages.${system}.zls;
+        zls = zls-flake.packages.${system}.zls;
 
         lib = pkgs.lib;
         in {
         devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
         pkgs.zigpkgs.master-2023-02-21
-        #zls
+        zls
         ];
       };
     });
