@@ -48,12 +48,9 @@ fn run(input: []const u8) struct { part01: u64, part02: u64 } {
     var groups = GroupsIterator{ .working_slice = input };
     while (try groups.next()) |group| {
         blk: {
-            var i: usize = 0;
-            while (i < group.ruck_0.len) : (i += 1) {
-                var j: usize = 0;
-                while (j < group.ruck_1.len) : (j += 1) {
-                    var k: usize = 0;
-                    while (k < group.ruck_2.len) : (k += 1) {
+            for (0..group.ruck_0.len) |i| {
+                for (0..group.ruck_1.len) |j| {
+                    for (0..group.ruck_2.len) |k| {
                         if (group.ruck_0[i] == group.ruck_1[j] and group.ruck_1[j] == group.ruck_2[k]) {
                             switch (group.ruck_0[i]) {
                                 'a'...'z' => part02 += group.ruck_0[i] - 96,
